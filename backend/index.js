@@ -144,6 +144,38 @@ app.get('/api/registrations/pending', authenticate, async (req, res) => {
     }
 })
 
+// Faculty: Get All Registrations (for reports)
+app.get('/api/registrations', authenticate, async (req, res) => {
+    if (req.user.role !== 'faculty' && req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Access denied' })
+    }
+
+    const { status } = req.query
+    let query = `
+      SELECT r.id, u.name as student_name, u.email, s.code, s.name as subject_name, 
+             e.date, e.hall, e.slot, r.status 
+      FROM registrations r 
+      JOIN users u ON r.student_id = u.id 
+      JOIN exams e ON r.exam_id = e.id 
+      JOIN subjects s ON e.subject_id = s.id 
+    `
+    const params = []
+
+    if (status) {
+        query += ' WHERE r.status = ?'
+        params.push(status)
+    }
+
+    query += ' ORDER BY e.date ASC'
+
+    try {
+        const results = await db.all(query, params)
+        res.json(results)
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch registrations' })
+    }
+})
+
 app.post('/api/registrations/:id/verify', authenticate, async (req, res) => {
     if (req.user.role !== 'faculty' && req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Access denied' })

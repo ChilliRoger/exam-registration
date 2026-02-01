@@ -52,6 +52,48 @@ export default function FacultyDashboard() {
         }
     }
 
+    const handleDownloadReport = async (type) => {
+        try {
+            const status = type === 'attendance' ? 'Approved' : ''
+            const res = await fetch(`${API_URL}/api/registrations${status ? `?status=${status}` : ''}`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            })
+            const data = await res.json()
+
+            if (!data || data.length === 0) {
+                alert('No data available for report')
+                return
+            }
+
+            // Generate CSV
+            const headers = ['Student Name', 'Email', 'Subject Code', 'Subject Name', 'Exam Date', 'Hall', 'Slot', 'Status']
+            const csvContent = [
+                headers.join(','),
+                ...data.map(row => [
+                    `"${row.student_name}"`,
+                    `"${row.email}"`,
+                    `"${row.code}"`,
+                    `"${row.subject_name}"`,
+                    row.date,
+                    `"${row.hall}"`,
+                    row.slot,
+                    row.status
+                ].join(','))
+            ].join('\n')
+
+            const blob = new Blob([csvContent], { type: 'text/csv' })
+            const url = window.URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `${type}_report_${new Date().toISOString().split('T')[0]}.csv`
+            a.click()
+            window.URL.revokeObjectURL(url)
+        } catch (err) {
+            console.error(err)
+            alert('Failed to generate report')
+        }
+    }
+
     return (
         <div className="flex flex-col gap-6">
             <div className="card">
@@ -117,13 +159,21 @@ export default function FacultyDashboard() {
                     Generate and download examination reports.
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                    <button className="btn-outline flex flex-col items-center gap-2 p-6">
+                    <button
+                        className="btn-outline flex flex-col items-center gap-2 p-6"
+                        onClick={() => handleDownloadReport('attendance')}
+                    >
                         <FileText size={32} color="var(--text-muted)" />
                         <span>Attendance Sheet</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(Approved Only)</span>
                     </button>
-                    <button className="btn-outline flex flex-col items-center gap-2 p-6">
+                    <button
+                        className="btn-outline flex flex-col items-center gap-2 p-6"
+                        onClick={() => handleDownloadReport('summary')}
+                    >
                         <FileText size={32} color="var(--text-muted)" />
                         <span>Registration Summary</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(All Students)</span>
                     </button>
                 </div>
             </div>

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Calendar } from 'lucide-react'
+import { Plus, Calendar, Users, Settings } from 'lucide-react'
 
 const API_URL = 'http://localhost:5000'
 
 export default function AdminDashboard() {
     const [exams, setExams] = useState([])
     const [subjects, setSubjects] = useState([])
+    const [stats, setStats] = useState({ totalStudents: 0, totalExams: 0, pendingRegistrations: 0 })
     const [showForm, setShowForm] = useState(false)
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
@@ -19,7 +20,20 @@ export default function AdminDashboard() {
     useEffect(() => {
         fetchExams()
         fetchSubjects()
+        fetchStats()
     }, [])
+
+    const fetchStats = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/stats`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            })
+            const data = await res.json()
+            setStats(data)
+        } catch (err) {
+            console.error('Failed to fetch stats:', err)
+        }
+    }
 
     const fetchExams = async () => {
         try {
@@ -67,6 +81,7 @@ export default function AdminDashboard() {
             setShowForm(false)
             setFormData({ subject_id: '', date: '', hall: '', slot: '' })
             fetchExams()
+            fetchStats()
         } catch (err) {
             alert(err.message)
         } finally {
@@ -79,10 +94,24 @@ export default function AdminDashboard() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
                 <div className="card flex items-center justify-between">
                     <div>
+                        <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Total Students</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.totalStudents}</div>
+                    </div>
+                    <Users color="var(--accent)" size={32} />
+                </div>
+                <div className="card flex items-center justify-between">
+                    <div>
                         <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Exams Scheduled</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{exams.length}</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.totalExams}</div>
                     </div>
                     <Calendar color="var(--accent)" size={32} />
+                </div>
+                <div className="card flex items-center justify-between">
+                    <div>
+                        <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Pending Verifications</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.pendingRegistrations}</div>
+                    </div>
+                    <Settings color="var(--accent)" size={32} />
                 </div>
             </div>
 
