@@ -1,33 +1,54 @@
-import React from 'react'
-import { Plus, Settings, Users, Calendar } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Plus, Calendar } from 'lucide-react'
+
+const API_URL = 'http://localhost:5000'
 
 export default function AdminDashboard() {
-    const [exams, setExams] = React.useState([])
-    const [showForm, setShowForm] = React.useState(false)
-    const [subjects, setSubjects] = React.useState([])
-    const [formData, setFormData] = React.useState({ subject_id: '', date: '', hall: '', slot: '' })
+    const [exams, setExams] = useState([])
+    const [subjects, setSubjects] = useState([])
+    const [showForm, setShowForm] = useState(false)
+    const [loading, setLoading] = useState(true)
+    const [submitting, setSubmitting] = useState(false)
+    const [formData, setFormData] = useState({
+        subject_id: '',
+        date: '',
+        hall: '',
+        slot: ''
+    })
 
-    React.useEffect(() => {
+    useEffect(() => {
         fetchExams()
         fetchSubjects()
     }, [])
 
-    const fetchExams = () => {
-        fetch('http://localhost:5000/api/exams')
-            .then(res => res.json())
-            .then(data => setExams(data))
+    const fetchExams = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/exams`)
+            const data = await res.json()
+            setExams(data)
+        } catch (err) {
+            console.error('Failed to fetch exams:', err)
+        } finally {
+            setLoading(false)
+        }
     }
 
-    const fetchSubjects = () => {
-        fetch('http://localhost:5000/api/subjects')
-            .then(res => res.json())
-            .then(data => setSubjects(data))
+    const fetchSubjects = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/subjects`)
+            const data = await res.json()
+            setSubjects(data)
+        } catch (err) {
+            console.error('Failed to fetch subjects:', err)
+        }
     }
 
     const handleCreate = async (e) => {
         e.preventDefault()
+        setSubmitting(true)
+
         try {
-            const res = await fetch('http://localhost:5000/api/exams', {
+            const res = await fetch(`${API_URL}/api/exams`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -35,13 +56,21 @@ export default function AdminDashboard() {
                 },
                 body: JSON.stringify(formData)
             })
-            if (res.ok) {
-                alert('Exam scheduled successfully')
-                setShowForm(false)
-                fetchExams()
+
+            const data = await res.json()
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Failed to schedule exam')
             }
+
+            alert('Exam scheduled successfully!')
+            setShowForm(false)
+            setFormData({ subject_id: '', date: '', hall: '', slot: '' })
+            fetchExams()
         } catch (err) {
-            alert('Failed to schedule exam')
+            alert(err.message)
+        } finally {
+            setSubmitting(false)
         }
     }
 
@@ -60,85 +89,129 @@ export default function AdminDashboard() {
             <div className="card">
                 <div className="flex justify-between items-center" style={{ marginBottom: '1.5rem' }}>
                     <h3>Exam Schedule Management</h3>
-                    <button className="btn-primary flex items-center gap-2" onClick={() => setShowForm(!showForm)}>
+                    <button
+                        className="btn-primary flex items-center gap-2"
+                        onClick={() => setShowForm(!showForm)}
+                    >
                         <Plus size={18} /> {showForm ? 'Cancel' : 'Add New Schedule'}
                     </button>
                 </div>
 
                 {showForm && (
-                    <form onSubmit={handleCreate} className="flex flex-col gap-4" style={{ marginBottom: '2rem', padding: '1rem', backgroundColor: '#f8fafc', borderRadius: 'var(--radius)' }}>
+                    <form
+                        onSubmit={handleCreate}
+                        className="flex flex-col gap-4"
+                        style={{
+                            marginBottom: '2rem',
+                            padding: '1rem',
+                            backgroundColor: '#f8fafc',
+                            borderRadius: 'var(--radius)'
+                        }}
+                    >
                         <div className="flex gap-4">
-                            <select
-                                required
-                                value={formData.subject_id}
-                                onChange={(e) => setFormData({ ...formData, subject_id: e.target.value })}
-                            >
-                                <option value="">Select Subject</option>
-                                {subjects.map(s => <option key={s.id} value={s.id}>{s.code} - {s.name}</option>)}
-                            </select>
-                            <input
-                                type="date"
-                                required
-                                value={formData.date}
-                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                            />
+                            <div className="flex-1">
+                                <label style={{ fontSize: '0.875rem', fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>
+                                    Subject
+                                </label>
+                                <select
+                                    required
+                                    value={formData.subject_id}
+                                    onChange={(e) => setFormData({ ...formData, subject_id: e.target.value })}
+                                    disabled={submitting}
+                                >
+                                    <option value="">Select Subject</option>
+                                    {subjects.map(s => (
+                                        <option key={s.id} value={s.id}>{s.code} - {s.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex-1">
+                                <label style={{ fontSize: '0.875rem', fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>
+                                    Exam Date
+                                </label>
+                                <input
+                                    type="date"
+                                    required
+                                    value={formData.date}
+                                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                    disabled={submitting}
+                                    min={new Date().toISOString().split('T')[0]}
+                                />
+                            </div>
                         </div>
+
                         <div className="flex gap-4">
-                            <input
-                                type="text"
-                                placeholder="Hall Allocation (e.g. Hall A)"
-                                required
-                                value={formData.hall}
-                                onChange={(e) => setFormData({ ...formData, hall: e.target.value })}
-                            />
-                            <select
-                                required
-                                value={formData.slot}
-                                onChange={(e) => setFormData({ ...formData, slot: e.target.value })}
-                            >
-                                <option value="">Select Slot</option>
-                                <option value="Morning">Morning (9:00 AM - 12:00 PM)</option>
-                                <option value="Afternoon">Afternoon (1:00 PM - 4:00 PM)</option>
-                            </select>
+                            <div className="flex-1">
+                                <label style={{ fontSize: '0.875rem', fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>
+                                    Hall Allocation
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g., Hall A, Room 101"
+                                    required
+                                    value={formData.hall}
+                                    onChange={(e) => setFormData({ ...formData, hall: e.target.value })}
+                                    disabled={submitting}
+                                />
+                            </div>
+
+                            <div className="flex-1">
+                                <label style={{ fontSize: '0.875rem', fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>
+                                    Time Slot
+                                </label>
+                                <select
+                                    required
+                                    value={formData.slot}
+                                    onChange={(e) => setFormData({ ...formData, slot: e.target.value })}
+                                    disabled={submitting}
+                                >
+                                    <option value="">Select Slot</option>
+                                    <option value="Morning">Morning (9:00 AM - 12:00 PM)</option>
+                                    <option value="Afternoon">Afternoon (1:00 PM - 4:00 PM)</option>
+                                </select>
+                            </div>
                         </div>
-                        <button type="submit" className="btn-primary" style={{ alignSelf: 'flex-start' }}>Save Schedule</button>
+
+                        <button
+                            type="submit"
+                            className="btn-primary"
+                            style={{ alignSelf: 'flex-start' }}
+                            disabled={submitting}
+                        >
+                            {submitting ? 'Saving...' : 'Save Schedule'}
+                        </button>
                     </form>
                 )}
 
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Exam Code</th>
-                            <th>Subject Name</th>
-                            <th>Date</th>
-                            <th>Hall Allocation</th>
-                            <th>Slot</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {exams.map(exam => (
-                            <tr key={exam.id}>
-                                <td>{exam.code}</td>
-                                <td>{exam.subject_name}</td>
-                                <td>{exam.date}</td>
-                                <td>{exam.hall}</td>
-                                <td>{exam.slot}</td>
+                {loading ? (
+                    <p>Loading exams...</p>
+                ) : exams.length === 0 ? (
+                    <p>No exams scheduled yet. Click "Add New Schedule" to create one.</p>
+                ) : (
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Exam Code</th>
+                                <th>Subject Name</th>
+                                <th>Date</th>
+                                <th>Hall Allocation</th>
+                                <th>Slot</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
-            <div className="card">
-                <h3>System Configuration</h3>
-                <div className="flex gap-4" style={{ marginTop: '1rem' }}>
-                    <button className="btn-outline flex items-center gap-2">
-                        <Settings size={18} /> Database Backup
-                    </button>
-                    <button className="btn-outline flex items-center gap-2">
-                        <Users size={18} /> Manage Faculty Roles
-                    </button>
-                </div>
+                        </thead>
+                        <tbody>
+                            {exams.map(exam => (
+                                <tr key={exam.id}>
+                                    <td>{exam.code}</td>
+                                    <td>{exam.subject_name}</td>
+                                    <td>{new Date(exam.date).toLocaleDateString()}</td>
+                                    <td>{exam.hall}</td>
+                                    <td>{exam.slot}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
             </div>
         </div>
     )

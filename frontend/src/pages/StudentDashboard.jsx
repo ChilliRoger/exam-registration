@@ -1,18 +1,30 @@
-import React from 'react'
-import { Routes, Route, Link, Navigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { BookOpen, Calendar, CheckCircle, Clock } from 'lucide-react'
 
-const Overview = () => {
-    const [registrations, setRegistrations] = React.useState([])
+const API_URL = 'http://localhost:5000'
 
-    React.useEffect(() => {
-        fetch('http://localhost:5000/api/registrations/my', {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        })
-            .then(res => res.json())
-            .then(data => setRegistrations(data || []))
-            .catch(err => console.error(err))
+const Overview = () => {
+    const [registrations, setRegistrations] = useState([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        fetchRegistrations()
     }, [])
+
+    const fetchRegistrations = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/registrations/my`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            })
+            const data = await res.json()
+            setRegistrations(data || [])
+        } catch (err) {
+            console.error('Failed to fetch registrations:', err)
+        } finally {
+            setLoading(false)
+        }
+    }
 
     const approvedCount = registrations.filter(r => r.status === 'Approved').length
     const pendingCount = registrations.filter(r => r.status === 'Pending').length
@@ -53,8 +65,10 @@ const Overview = () => {
 
             <div className="card">
                 <h3>Active Registrations</h3>
-                {registrations.length === 0 ? (
-                    <p style={{ color: 'var(--text-muted)' }}>No registrations found.</p>
+                {loading ? (
+                    <p style={{ color: 'var(--text-muted)' }}>Loading...</p>
+                ) : registrations.length === 0 ? (
+                    <p style={{ color: 'var(--text-muted)' }}>No registrations found. Register for exams from the Subject Selection page.</p>
                 ) : (
                     <table>
                         <thead>
@@ -70,9 +84,12 @@ const Overview = () => {
                                 <tr key={reg.id}>
                                     <td>{reg.code}</td>
                                     <td>{reg.name}</td>
-                                    <td>{reg.date}</td>
+                                    <td>{new Date(reg.date).toLocaleDateString()}</td>
                                     <td>
-                                        <span className={`badge ${reg.status === 'Approved' ? 'badge-success' : reg.status === 'Rejected' ? 'badge-error' : 'badge-pending'}`}>
+                                        <span className={`badge ${reg.status === 'Approved' ? 'badge-success' :
+                                                reg.status === 'Rejected' ? 'badge-error' :
+                                                    'badge-pending'
+                                            }`}>
                                             {reg.status}
                                         </span>
                                     </td>
@@ -87,34 +104,51 @@ const Overview = () => {
 }
 
 const Schedule = () => {
-    const [schedule, setSchedule] = React.useState([])
+    const [schedule, setSchedule] = useState([])
+    const [loading, setLoading] = useState(true)
 
-    React.useEffect(() => {
-        fetch('http://localhost:5000/api/registrations/my', {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        })
-            .then(res => res.json())
-            .then(data => setSchedule(data.filter(r => r.status === 'Approved')))
+    useEffect(() => {
+        fetchSchedule()
     }, [])
+
+    const fetchSchedule = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/registrations/my`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            })
+            const data = await res.json()
+            setSchedule(data.filter(r => r.status === 'Approved'))
+        } catch (err) {
+            console.error('Failed to fetch schedule:', err)
+        } finally {
+            setLoading(false)
+        }
+    }
 
     return (
         <div className="card">
             <h3>My Exam Schedule</h3>
-            {schedule.length === 0 ? <p>No approved exams schedule available.</p> : (
+            {loading ? (
+                <p>Loading...</p>
+            ) : schedule.length === 0 ? (
+                <p>No approved exams scheduled yet.</p>
+            ) : (
                 <table>
                     <thead>
                         <tr>
                             <th>Subject</th>
                             <th>Date</th>
-                            <th>Hall Details</th>
+                            <th>Hall</th>
+                            <th>Time Slot</th>
                         </tr>
                     </thead>
                     <tbody>
                         {schedule.map(exam => (
                             <tr key={exam.id}>
                                 <td>{exam.code} - {exam.name}</td>
-                                <td>{exam.date}</td>
-                                <td>Check Hall Allocation on Notice Board (or contact Admin)</td>
+                                <td>{new Date(exam.date).toLocaleDateString()}</td>
+                                <td>{exam.hall}</td>
+                                <td>{exam.slot}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -125,47 +159,86 @@ const Schedule = () => {
 }
 
 const SubjectSelection = () => {
-    const [subjects, setSubjects] = React.useState([])
+    const [subjects, setSubjects] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [registering, setRegistering] = useState(null)
 
-    React.useEffect(() => {
-        fetch('http://localhost:5000/api/subjects')
-            .then(res => res.json())
-            .then(data => setSubjects(data))
+    useEffect(() => {
+        fetchSubjects()
     }, [])
 
-    const handleRegister = async (examId) => {
+    const fetchSubjects = async () => {
         try {
-            const res = await fetch('http://localhost:5000/api/register', {
+            const res = await fetch(`${API_URL}/api/subjects`)
+            const data = await res.json()
+            setSubjects(data)
+        } catch (err) {
+            console.error('Failed to fetch subjects:', err)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleRegister = async (subjectId) => {
+        setRegistering(subjectId)
+        try {
+            const res = await fetch(`${API_URL}/api/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
-                body: JSON.stringify({ exam_id: examId })
+                body: JSON.stringify({ exam_id: subjectId })
             })
+
             const data = await res.json()
-            if (data.error) throw new Error(data.error)
-            alert('Registered Successfully!')
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Registration failed')
+            }
+
+            alert('Registered successfully! Check your dashboard for status.')
         } catch (err) {
             alert(err.message)
+        } finally {
+            setRegistering(null)
         }
     }
 
     return (
         <div className="card">
             <h3>Subject Selection</h3>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Select the subjects you wish to register for the upcoming semester examination.</p>
-            <div className="flex flex-col gap-4">
-                {subjects.map(sub => (
-                    <div key={sub.id} className="flex items-center justify-between p-4 border rounded-md" style={{ borderColor: 'var(--border)' }}>
-                        <div className="flex-1">
-                            <div style={{ fontWeight: '600' }}>{sub.code} - {sub.name}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Credits: {sub.credits}</div>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                Select the subjects you wish to register for the upcoming semester examination.
+            </p>
+
+            {loading ? (
+                <p>Loading subjects...</p>
+            ) : (
+                <div className="flex flex-col gap-4">
+                    {subjects.map(sub => (
+                        <div
+                            key={sub.id}
+                            className="flex items-center justify-between p-4 border rounded-md"
+                            style={{ borderColor: 'var(--border)' }}
+                        >
+                            <div className="flex-1">
+                                <div style={{ fontWeight: '600' }}>{sub.code} - {sub.name}</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                    Credits: {sub.credits}
+                                </div>
+                            </div>
+                            <button
+                                className="btn-primary"
+                                onClick={() => handleRegister(sub.id)}
+                                disabled={registering === sub.id}
+                            >
+                                {registering === sub.id ? 'Registering...' : 'Register'}
+                            </button>
                         </div>
-                        <button className="btn-primary" onClick={() => handleRegister(sub.id)}>Register</button>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
         </div>
     )
 }

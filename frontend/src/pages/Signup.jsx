@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { UserPlus } from 'lucide-react'
 
+const API_URL = 'http://localhost:5000'
+
 export default function Signup() {
     const [formData, setFormData] = useState({
         name: '',
@@ -9,23 +11,34 @@ export default function Signup() {
         password: '',
         role: 'student'
     })
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState('')
     const navigate = useNavigate()
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+        setError('')
+        setLoading(true)
+
         try {
-            const res = await fetch('http://localhost:5000/api/auth/signup', {
+            const res = await fetch(`${API_URL}/api/auth/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             })
+
             const data = await res.json()
-            if (data.error) throw new Error(data.error)
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Signup failed')
+            }
 
             alert('Account created successfully! Please login.')
             navigate('/login')
         } catch (err) {
-            alert(err.message)
+            setError(err.message)
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -49,6 +62,19 @@ export default function Signup() {
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Join the university examination portal</p>
                 </div>
 
+                {error && (
+                    <div style={{
+                        padding: '0.75rem',
+                        backgroundColor: '#fee2e2',
+                        color: '#991b1b',
+                        borderRadius: 'var(--radius)',
+                        marginBottom: '1rem',
+                        fontSize: '0.875rem'
+                    }}>
+                        {error}
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                     <div className="flex flex-col gap-2">
                         <label style={{ fontSize: '0.875rem', fontWeight: '500' }}>Full Name</label>
@@ -58,6 +84,7 @@ export default function Signup() {
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             placeholder="John Doe"
+                            disabled={loading}
                         />
                     </div>
 
@@ -69,6 +96,7 @@ export default function Signup() {
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             placeholder="name@university.edu"
+                            disabled={loading}
                         />
                     </div>
 
@@ -77,10 +105,13 @@ export default function Signup() {
                         <input
                             type="password"
                             required
+                            minLength="6"
                             value={formData.password}
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                             placeholder="••••••••"
+                            disabled={loading}
                         />
+                        <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Minimum 6 characters</small>
                     </div>
 
                     <div className="flex flex-col gap-2">
@@ -88,14 +119,20 @@ export default function Signup() {
                         <select
                             value={formData.role}
                             onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                            disabled={loading}
                         >
                             <option value="student">Student</option>
                             <option value="faculty">Faculty</option>
                         </select>
                     </div>
 
-                    <button type="submit" className="btn-primary" style={{ marginTop: '1rem', padding: '0.75rem' }}>
-                        Register
+                    <button
+                        type="submit"
+                        className="btn-primary"
+                        style={{ marginTop: '1rem', padding: '0.75rem' }}
+                        disabled={loading}
+                    >
+                        {loading ? 'Creating account...' : 'Register'}
                     </button>
                 </form>
 

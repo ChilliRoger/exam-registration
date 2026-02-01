@@ -64,7 +64,31 @@ export async function initDb() {
       (2, '2026-05-18', 'Hall B', 'Afternoon')`)
     }
 
-    console.log('Database initialized successfully.')
+    // Seed test user accounts
+    const userCount = await get('SELECT COUNT(*) as count FROM users')
+    if (userCount.count === 0) {
+        // Import bcrypt for password hashing
+        const bcrypt = await import('bcryptjs')
+
+        // Hash passwords (using bcrypt with 10 salt rounds)
+        const studentPassword = await bcrypt.hash('student123', 10)
+        const facultyPassword = await bcrypt.hash('faculty123', 10)
+        const adminPassword = await bcrypt.hash('admin123', 10)
+
+        await run(`INSERT INTO users (name, email, password, role) VALUES 
+      ('Test Student', 'student@university.edu', ?, 'student'),
+      ('Test Faculty', 'faculty@university.edu', ?, 'faculty'),
+      ('Test Admin', 'admin@university.edu', ?, 'admin')`,
+            [studentPassword, facultyPassword, adminPassword]
+        )
+
+        console.log('✓ Test accounts created:')
+        console.log('  - Student: student@university.edu / student123')
+        console.log('  - Faculty: faculty@university.edu / faculty123')
+        console.log('  - Admin: admin@university.edu / admin123')
+    }
+
+    console.log('✓ Database initialized successfully.')
 }
 
 export default { db, run, get, all }
