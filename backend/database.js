@@ -1,5 +1,6 @@
 import sqlite3 from 'sqlite3'
 import { promisify } from 'util'
+import bcrypt from 'bcryptjs'
 
 const db = new sqlite3.Database('./database.sqlite')
 const run = promisify(db.run.bind(db))
@@ -67,9 +68,6 @@ export async function initDb() {
     // Seed test user accounts
     const userCount = await get('SELECT COUNT(*) as count FROM users')
     if (userCount.count === 0) {
-        // Import bcrypt for password hashing
-        const bcrypt = await import('bcryptjs')
-
         // Hash passwords (using bcrypt with 10 salt rounds)
         const studentPassword = await bcrypt.hash('student123', 10)
         const facultyPassword = await bcrypt.hash('faculty123', 10)
