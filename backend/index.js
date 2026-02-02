@@ -344,6 +344,24 @@ app.post('/api/exams', authenticate, async (req, res) => {
     }
 })
 
+app.delete('/api/exams/:id', authenticate, async (req, res) => {
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Access denied' })
+    }
+
+    try {
+        // First delete registrations associated with this exam
+        await db.run('DELETE FROM registrations WHERE exam_id = ?', [req.params.id])
+        // Then delete the exam
+        const result = await db.run('DELETE FROM exams WHERE id = ?', [req.params.id])
+
+        res.json({ message: 'Exam schedule removed successfully' })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ error: 'Failed to remove exam schedule' })
+    }
+})
+
 // ============ STATS ROUTES ============
 app.get('/api/stats', authenticate, async (req, res) => {
     try {

@@ -134,6 +134,22 @@ export default function AdminDashboard() {
         finally { setSubmitting(false) }
     }
 
+    const handleDeleteExam = async (id) => {
+        if (!window.confirm('Are you sure you want to remove this exam schedule? This will also remove all student registrations for this exam.')) return
+
+        try {
+            const res = await fetch(`${API_URL}/api/exams/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            })
+            if (!res.ok) throw new Error('Failed to remove exam')
+            alert('Exam schedule removed successfully!')
+            fetchExams()
+        } catch (err) {
+            alert(err.message)
+        }
+    }
+
     const renderDashboard = () => (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
             <div className="card flex items-center justify-between">
@@ -212,6 +228,7 @@ export default function AdminDashboard() {
                                 <th>Date</th>
                                 <th>Hall</th>
                                 <th>Slot</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -222,6 +239,23 @@ export default function AdminDashboard() {
                                     <td>{new Date(exam.date).toLocaleDateString()}</td>
                                     <td>{exam.hall}</td>
                                     <td>{exam.slot}</td>
+                                    <td>
+                                        <button
+                                            onClick={() => handleDeleteExam(exam.id)}
+                                            style={{
+                                                color: 'var(--error)',
+                                                padding: '4px 8px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '4px',
+                                                background: 'transparent',
+                                                border: '1px solid var(--error)',
+                                                borderRadius: '4px'
+                                            }}
+                                        >
+                                            <Trash size={14} /> Remove
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
