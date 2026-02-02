@@ -67,6 +67,20 @@ app.post('/api/auth/login', async (req, res) => {
     })
 })
 
+// ============ USER ROUTES ============
+app.get('/api/users', authenticate, async (req, res) => {
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Access denied' })
+    }
+
+    try {
+        const users = await db.all('SELECT id, name, email, role FROM users')
+        res.json(users)
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch users' })
+    }
+})
+
 // ============ SUBJECT ROUTES ============
 app.get('/api/subjects', async (req, res) => {
     try {
@@ -74,6 +88,28 @@ app.get('/api/subjects', async (req, res) => {
         res.json(subjects)
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch subjects' })
+    }
+})
+
+app.post('/api/subjects', authenticate, async (req, res) => {
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Access denied' })
+    }
+
+    const { code, name, credits } = req.body
+
+    if (!code || !name || !credits) {
+        return res.status(400).json({ error: 'All fields are required' })
+    }
+
+    try {
+        await db.run(
+            'INSERT INTO subjects (code, name, credits) VALUES (?, ?, ?)',
+            [code, name, credits]
+        )
+        res.status(201).json({ message: 'Subject added successfully' })
+    } catch (err) {
+        res.status(400).json({ error: 'Subject code already exists' })
     }
 })
 
