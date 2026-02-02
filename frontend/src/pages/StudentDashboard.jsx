@@ -265,12 +265,15 @@ const SubjectSelection = () => {
     )
 }
 
+import Profile from './Profile'
+
 export default function StudentDashboard() {
     return (
         <Routes>
             <Route path="dashboard" element={<Overview />} />
             <Route path="subjects" element={<SubjectSelection />} />
             <Route path="schedule" element={<Schedule />} />
+            <Route path="profile" element={<Profile />} />
             <Route path="*" element={<Navigate to="dashboard" />} />
         </Routes>
     )

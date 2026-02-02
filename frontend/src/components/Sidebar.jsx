@@ -1,5 +1,5 @@
 import React from 'react'
-import { Home, BookOpen, Calendar, Users, LogOut, CheckSquare, Bell } from 'lucide-react'
+import { Home, BookOpen, Calendar, Users, LogOut, CheckSquare, Bell, User } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 
 const Sidebar = ({ role }) => {
@@ -10,16 +10,19 @@ const Sidebar = ({ role }) => {
             { name: 'Dashboard', icon: Home, path: '/student/dashboard' },
             { name: 'Subject Selection', icon: BookOpen, path: '/student/subjects' },
             { name: 'Schedules', icon: Calendar, path: '/student/schedule' },
+            { name: 'Profile', icon: User, path: '/student/profile' },
         ],
         faculty: [
             { name: 'Overview', icon: Home, path: '/faculty/dashboard' },
             { name: 'Verifications', icon: CheckSquare, path: '/faculty/verify' },
             { name: 'Reports', icon: Bell, path: '/faculty/reports' },
+            { name: 'Profile', icon: User, path: '/faculty/profile' },
         ],
         admin: [
             { name: 'Admin Hub', icon: Home, path: '/admin/dashboard' },
             { name: 'Manage Exams', icon: Calendar, path: '/admin/exams' },
             { name: 'User Accounts', icon: Users, path: '/admin/users' },
+            { name: 'Profile', icon: User, path: '/admin/profile' },
         ]
     }
 

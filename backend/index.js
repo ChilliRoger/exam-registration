@@ -5,13 +5,35 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import db, { initDb } from './database.js'
 
+import { fileURLToPath } from 'url'
+import path from 'path'
+import fs from 'fs'
+import multer from 'multer'
+
 dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 5000
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key'
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'uploads')
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir)
+}
+
 app.use(cors())
 app.use(express.json())
+app.use('/uploads', express.static(uploadsDir))
+
+// Multer Config
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, uploadsDir),
+    filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
+})
+const upload = multer({ storage })
 
 // Initialize Database
 initDb().catch(console.error)
@@ -27,6 +49,60 @@ const authenticate = (req, res, next) => {
         res.status(401).json({ error: 'Invalid token' })
     }
 }
+
+// ============ PROFILE ROUTES ============
+app.get('/api/profile', authenticate, async (req, res) => {
+    try {
+        const user = await db.get(
+            'SELECT id, name, email, role, register_no, department, year, staff_id, profile_photo FROM users WHERE id = ?',
+            [req.user.id]
+        )
+        res.json(user)
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch profile' })
+    }
+})
+
+app.put('/api/profile', authenticate, upload.single('profile_photo'), async (req, res) => {
+    const { name, email, register_no, department, year, staff_id } = req.body
+    const profile_photo = req.file ? `/uploads/${req.file.filename}` : undefined
+
+    let query = 'UPDATE users SET name = ?, email = ?'
+    let params = [name, email]
+
+    if (register_no !== undefined) {
+        query += ', register_no = ?'
+        params.push(register_no)
+    }
+    if (department !== undefined) {
+        query += ', department = ?'
+        params.push(department)
+    }
+    if (year !== undefined) {
+        query += ', year = ?'
+        params.push(year)
+    }
+    if (staff_id !== undefined) {
+        query += ', staff_id = ?'
+        params.push(staff_id)
+    }
+    if (profile_photo) {
+        query += ', profile_photo = ?'
+        params.push(profile_photo)
+    }
+
+    query += ' WHERE id = ?'
+    params.push(req.user.id)
+
+    try {
+        await db.run(query, params)
+        const updatedUser = await db.get('SELECT * FROM users WHERE id = ?', [req.user.id])
+        res.json({ message: 'Profile updated successfully', user: updatedUser })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ error: 'Failed to update profile' })
+    }
+})
 
 // ============ AUTH ROUTES ============
 app.post('/api/auth/signup', async (req, res) => {

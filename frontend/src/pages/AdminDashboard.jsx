@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, Calendar, Users, Settings, BookOpen, Trash } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
+import Profile from './Profile'
 
 const API_URL = 'http://localhost:5000'
 
@@ -310,6 +311,7 @@ export default function AdminDashboard() {
             {path.includes('dashboard') && renderDashboard()}
             {path.includes('exams') && renderExams()}
             {path.includes('users') && renderUsers()}
+            {path.includes('profile') && <Profile />}
         </div>
     )
 }

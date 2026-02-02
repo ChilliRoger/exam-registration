@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Check, X, FileText, Activity } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
+import Profile from './Profile'
 
 const API_URL = 'http://localhost:5000'
 
@@ -206,6 +207,7 @@ export default function FacultyDashboard() {
             {path.includes('dashboard') && renderOverview()}
             {path.includes('verify') && renderVerify()}
             {path.includes('reports') && renderReports()}
+            {path.includes('profile') && <Profile />}
         </div>
     )
 }
