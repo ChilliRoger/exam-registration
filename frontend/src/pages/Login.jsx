@@ -362,6 +362,25 @@ export default function Login({ onLogin }) {
                     Test Accounts
                 </button>
 
+                {/* System Guide Button */}
+                <button
+                    onClick={() => setShowGuide(true)}
+                    className="btn-outline"
+                    style={{
+                        position: 'absolute',
+                        top: '3.5rem',
+                        right: '1rem',
+                        padding: '0.5rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        fontSize: '0.875rem'
+                    }}
+                >
+                    <BookOpen size={18} />
+                    System Guide
+                </button>
+
                 <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
                     <div style={{
                         width: '48px',
@@ -432,26 +451,6 @@ export default function Login({ onLogin }) {
                 </div>
             </div>
 
-            {/* Floating Guide Button */}
-            <button
-                onClick={() => setShowGuide(true)}
-                className="btn-primary"
-                style={{
-                    position: 'fixed',
-                    bottom: '2rem',
-                    right: '2rem',
-                    borderRadius: '50px',
-                    padding: '0.75rem 1.25rem',
-                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    zIndex: 100
-                }}
-            >
-                <BookOpen size={20} />
-                <span>System Guide</span>
-            </button>
         </div>
     )
 }
