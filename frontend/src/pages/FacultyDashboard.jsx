@@ -13,6 +13,8 @@ export default function FacultyDashboard() {
 
     useEffect(() => {
         fetchPending()
+        const interval = setInterval(fetchPending, 5000)
+        return () => clearInterval(interval)
     }, [])
 
     const fetchPending = async () => {

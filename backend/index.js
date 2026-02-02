@@ -145,7 +145,7 @@ app.post('/api/register', authenticate, async (req, res) => {
 app.get('/api/registrations/my', authenticate, async (req, res) => {
     try {
         const registrations = await db.all(`
-      SELECT r.id, s.code, s.name, e.date, e.hall, e.slot, r.status 
+      SELECT r.id, r.exam_id, s.code, s.name, e.date, e.hall, e.slot, r.status 
       FROM registrations r 
       JOIN exams e ON r.exam_id = e.id 
       JOIN subjects s ON e.subject_id = s.id 

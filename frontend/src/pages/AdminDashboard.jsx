@@ -34,8 +34,9 @@ export default function AdminDashboard() {
     })
 
     useEffect(() => {
-        setLoading(true)
-        const fetchData = async () => {
+        const fetchData = async (isBackground = false) => {
+            if (!isBackground) setLoading(true)
+
             if (path.includes('dashboard')) {
                 await fetchStats()
             } else if (path.includes('exams')) {
@@ -43,9 +44,13 @@ export default function AdminDashboard() {
             } else if (path.includes('users')) {
                 await fetchUsers()
             }
-            setLoading(false)
+
+            if (!isBackground) setLoading(false)
         }
-        fetchData()
+
+        fetchData(false)
+        const interval = setInterval(() => fetchData(true), 5000)
+        return () => clearInterval(interval)
     }, [path])
 
     const fetchStats = async () => {
