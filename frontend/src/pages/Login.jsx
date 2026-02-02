@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { LogIn, HelpCircle, X } from 'lucide-react'
+import { LogIn, HelpCircle, X, BookOpen, GraduationCap, UserCheck, Shield } from 'lucide-react'
 
 const API_URL = 'http://localhost:5000'
 
@@ -10,6 +10,7 @@ export default function Login({ onLogin }) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [showHelp, setShowHelp] = useState(false)
+    const [showGuide, setShowGuide] = useState(false)
     const navigate = useNavigate()
 
     const handleSubmit = async (e) => {
@@ -70,7 +71,157 @@ export default function Login({ onLogin }) {
 
     return (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: 'var(--bg)', position: 'relative' }}>
-            {/* Help Modal */}
+
+            {/* Guide Modal */}
+            {showGuide && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 1000,
+                    padding: '1rem'
+                }}>
+                    <div className="card" style={{
+                        width: '100%',
+                        maxWidth: '700px',
+                        maxHeight: '90vh',
+                        overflow: 'auto',
+                        position: 'relative'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <div style={{
+                                    padding: '0.5rem',
+                                    borderRadius: '8px',
+                                    backgroundColor: '#e0e7ff',
+                                    color: 'var(--accent)'
+                                }}>
+                                    <BookOpen size={24} />
+                                </div>
+                                <h3 style={{ margin: 0 }}>System Guide</h3>
+                            </div>
+                            <button
+                                onClick={() => setShowGuide(false)}
+                                className="btn-outline"
+                                style={{ padding: '0.5rem', border: 'none' }}
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div style={{ marginBottom: '2rem' }}>
+                            <p style={{ color: 'var(--text-muted)', lineHeight: '1.6' }}>
+                                Welcome to the <strong>Exam Registration System</strong>. This platform streamlines the entire examination process,
+                                from scheduling to student registration and faculty verification.
+                            </p>
+                        </div>
+
+                        <div style={{ display: 'grid', gap: '1.5rem' }}>
+                            {/* Student Section */}
+                            <div style={{
+                                display: 'flex',
+                                gap: '1rem',
+                                padding: '1.25rem',
+                                backgroundColor: '#f8fafc',
+                                borderRadius: '12px',
+                                border: '1px solid var(--border)'
+                            }}>
+                                <div style={{
+                                    minWidth: '40px',
+                                    height: '40px',
+                                    borderRadius: '50%',
+                                    backgroundColor: '#dbeafe',
+                                    color: '#2563eb',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <GraduationCap size={20} />
+                                </div>
+                                <div>
+                                    <h4 style={{ margin: '0 0 0.5rem 0' }}>Student Features</h4>
+                                    <ul style={{ margin: 0, paddingLeft: '1.25rem', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.5' }}>
+                                        <li><strong>Browse Subjects:</strong> View available courses and credit details.</li>
+                                        <li><strong>Exam Registration:</strong> Apply for upcoming exams with a single click.</li>
+                                        <li><strong>Track Status:</strong> Monitor application status (Pending, Approved, Rejected).</li>
+                                        <li><strong>View Schedule:</strong> Access approved exam dates, halls, and time slots.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            {/* Faculty Section */}
+                            <div style={{
+                                display: 'flex',
+                                gap: '1rem',
+                                padding: '1.25rem',
+                                backgroundColor: '#f8fafc',
+                                borderRadius: '12px',
+                                border: '1px solid var(--border)'
+                            }}>
+                                <div style={{
+                                    minWidth: '40px',
+                                    height: '40px',
+                                    borderRadius: '50%',
+                                    backgroundColor: '#d1fae5',
+                                    color: '#059669',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <UserCheck size={20} />
+                                </div>
+                                <div>
+                                    <h4 style={{ margin: '0 0 0.5rem 0' }}>Teacher / Faculty Features</h4>
+                                    <ul style={{ margin: 0, paddingLeft: '1.25rem', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.5' }}>
+                                        <li><strong>Verification Console:</strong> Review pending student registrations.</li>
+                                        <li><strong>Decision Making:</strong> Approve eligible students or reject invalid applications.</li>
+                                        <li><strong>Reports:</strong> Generate and download attendance sheets and summary reports (CSV).</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            {/* Admin Section */}
+                            <div style={{
+                                display: 'flex',
+                                gap: '1rem',
+                                padding: '1.25rem',
+                                backgroundColor: '#f8fafc',
+                                borderRadius: '12px',
+                                border: '1px solid var(--border)'
+                            }}>
+                                <div style={{
+                                    minWidth: '40px',
+                                    height: '40px',
+                                    borderRadius: '50%',
+                                    backgroundColor: '#f3e8ff',
+                                    color: '#7e22ce',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <Shield size={20} />
+                                </div>
+                                <div>
+                                    <h4 style={{ margin: '0 0 0.5rem 0' }}>Administrator Features</h4>
+                                    <ul style={{ margin: 0, paddingLeft: '1.25rem', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.5' }}>
+                                        <li><strong>Exam Scheduling:</strong> Create new exam schedules with dates, halls, and slots.</li>
+                                        <li><strong>System Overview:</strong> Monitor total students, exams, and pending actions.</li>
+                                        <li><strong>Subject Management:</strong> Manage the curriculum database (add/edit subjects).</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Help Modal (Test Accounts) */}
             {showHelp && (
                 <div style={{
                     position: 'fixed',
@@ -280,6 +431,27 @@ export default function Login({ onLogin }) {
                     Don't have an account? <Link to="/signup">Create account</Link>
                 </div>
             </div>
+
+            {/* Floating Guide Button */}
+            <button
+                onClick={() => setShowGuide(true)}
+                className="btn-primary"
+                style={{
+                    position: 'fixed',
+                    bottom: '2rem',
+                    right: '2rem',
+                    borderRadius: '50px',
+                    padding: '0.75rem 1.25rem',
+                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    zIndex: 100
+                }}
+            >
+                <BookOpen size={20} />
+                <span>System Guide</span>
+            </button>
         </div>
     )
 }
